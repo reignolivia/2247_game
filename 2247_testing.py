@@ -148,7 +148,7 @@ while running:
 
         quit_text = button_font.render("Quit", True, WHITE)
         screen.blit(quit_text, quit_text.get_rect(center=quit_button_draw.center))
-
+        
     # =========================
     # GAMEPLAY
     # =========================
