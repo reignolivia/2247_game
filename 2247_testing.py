@@ -13,9 +13,19 @@ GAME_BLUE = (2,100,147)
 BLUE = (95,183,207)
 RED = (95,183,207)
 
+#player limits
+LEFT_LIMIT = 50
+RIGHT_LIMIT = 1150
+TOP_LIMIT = 485
+BOTTOM_LIMIT = 560
+
 # Load and resize the background image
 background = pygame.image.load("2247_earth.png")
 background = pygame.transform.scale(background, (WIDTH, HEIGHT))
+
+# Earth to Moon background
+earth_to_moon = pygame.image.load("earth_to_moon.png")
+earth_to_moon = pygame.transform.scale(earth_to_moon, (WIDTH, HEIGHT))
 
 #intro images
 intro1 = pygame.image.load("Intro1.png")
@@ -33,7 +43,7 @@ story_fade_speed = 4
 #rockets
 rocket1 = pygame.image.load("rocket1.png")
 rocket2 = pygame.image.load("rocket2.png")
-rocket1 = pygame.transform.scale(rocket1, (50, 100))
+rocket1 = pygame.transform.scale(rocket1, (135, 250))
 rocket2 = pygame.transform.scale(rocket2, (50, 100))
 
 #player images
@@ -46,21 +56,29 @@ walk_right = pygame.transform.scale(walk_right, (160, 160))
 walk_left = pygame.transform.scale(walk_left, (160, 160))
 
 #rocket variables
-rocket1_x = 0
-rocket1_y = 0
+rocket1_x = 1000
+rocket1_y = 250
 rocket2_x = 0
 rocket2_y = 0
 speed = 10
 
 #player variables
-player_x = 100
-player_y = 100
+player_x = 118
+player_y = 551
 speed = 5
 current_image = idle
+
+#player and rocket rectangles
+player_rect = pygame.Rect(player_x, player_y, 160, 160)
+rocket_rect = pygame.Rect(rocket1_x, rocket1_y, 135, 250)
+
+#tracks whether the player is close enough to interact
+near_rocket = False
 
 #FONTS
 title_font = pygame.font.Font("PixeloidSans-Bold.ttf", 100)
 button_font = pygame.font.Font("PixeloidSans-Bold.ttf", 30)
+task_font = pygame.font.Font("PixeloidSans-Bold.ttf", 26)
 
 #title screen
 title = title_font.render("2247", True, GAME_BLUE)
@@ -68,7 +86,7 @@ title_rect = title.get_rect(center=(WIDTH // 2, HEIGHT // 2))
 
 clock = pygame.time.Clock()
 
-#Game State
+#Game State (basically where the game is at)
 game_state = "intro"
 
 new_game_button = pygame.Rect(500, 300, 300, 80)
@@ -91,6 +109,9 @@ while running:
 
     for event in pygame.event.get(): #checking for events (actions)
 
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        pygame.display.set_caption(f"Mouse Position: ({mouse_x}, {mouse_y})")
+
         if event.type == pygame.QUIT: #if user clicks the close button, end game
             running = False
 
@@ -108,15 +129,22 @@ while running:
 
         if event.type == pygame.KEYDOWN:
 
+            #Story screens
             if game_state == "story":
 
                 if event.key == pygame.K_RETURN:
-
                     current_story += 1
                     story_alpha = 0
 
                     if current_story >= len(story_images):
                         game_state = "game"
+
+            #Gameplay
+            elif game_state == "game":
+
+                #Enter the rocket
+                if event.key == pygame.K_e and near_rocket:
+                    game_state = "rocket_scene"
 
     # Draw Everything
     screen.blit(background, (0, 0))
@@ -200,9 +228,10 @@ while running:
 
     #3. GAMEPLAY
     elif game_state == "game":
+
         keys = pygame.key.get_pressed()
 
-    # Character starts as idle each frame
+        # Character starts as idle each frame
         current_image = idle
 
         # Movement
@@ -221,12 +250,55 @@ while running:
             player_y += speed
 
         # Keep player on screen
-        player_x = max(0, min(player_x, WIDTH - 160))
-        player_y = max(0, min(player_y, HEIGHT - 160))
+        player_x = max(LEFT_LIMIT, min(player_x, RIGHT_LIMIT))
+        player_y = max(TOP_LIMIT, min(player_y, BOTTOM_LIMIT))
+
+        # Update player and rocket rectangles
+        player_rect.topleft = (player_x, player_y)
+        rocket_rect.topleft = (rocket1_x, rocket1_y)
+
+        # Create a larger interaction area around the rocket
+        interaction_rect = rocket_rect.inflate(120, 120)
+
+        # Check if player is near the rocket
+        near_rocket = player_rect.colliderect(interaction_rect)
+
+        # Draw rocket
+        screen.blit(rocket1, (rocket1_x, rocket1_y))
 
         # Draw player
         screen.blit(current_image, (player_x, player_y))
 
+        # -----------------------------
+        # TASK OBJECTIVE
+        # -----------------------------
+        task_text = task_font.render(
+            "Task: Using WASD, head over to your rocket.",
+            True,
+            WHITE,
+        )
+
+        screen.blit(task_text, (25, 20))
+
+        # -----------------------------
+        # PLAYER IS CLOSE TO THE ROCKET
+        # -----------------------------
+        if near_rocket:
+
+            prompt = task_font.render(
+                "Press E to enter your rocket",
+                True,
+                WHITE,
+            )
+
+            screen.blit(prompt, (430, 635))
+
+    #4. Transition from Earth to Moon
+    elif game_state == "rocket_scene":
+
+        # Draw the Earth to Moon background
+        screen.blit(earth_to_moon, (0, 0))
+    
     pygame.display.flip()
     clock.tick(60)
 
