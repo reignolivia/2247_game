@@ -44,6 +44,12 @@ level1_intro = pygame.image.load("level1_intro.png")
 level1_intro = pygame.transform.scale(level1_intro, (WIDTH, HEIGHT))
 
 
+#moon rocks
+mrock1 = pygame.image.load("moon_rock1.png")
+mrock2 = pygame.image.load("moon_rock2.png")
+mrock1 = pygame.transform.scale(mrock1, (100, 100))
+mrock2 = pygame.transform.scale(mrock2, (100, 100))
+
 # Story screen variables
 story_images = [intro1, intro2]
 current_story = 0
@@ -424,7 +430,28 @@ while running:
         player_x = max(LEFT_LIMIT, min(player_x, RIGHT_LIMIT))
         player_y = max(TOP_LIMIT, min(player_y, BOTTOM_LIMIT))
 
+        # Moon rock positions
+        rock_positions = [
+            (100, 100),
+            (129, 452),
+            (538, 24),
+            (600, 300),
+            (800, 250),
+            (1072, 98),
+            (1100, 350),
+            (500, 450),
+            (300, 500),
+            (980, 621)
+        ]
+        
+        # Draw moon rocks around the map
+        for i, position in enumerate(rock_positions):
 
+            if i % 2 == 0:
+                screen.blit(mrock1, position)
+            else:
+                screen.blit(mrock2, position)
+    
     pygame.display.flip()
     clock.tick(60)
 
