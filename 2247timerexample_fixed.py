@@ -1,4 +1,5 @@
 import pygame
+import random
 
 pygame.init() #basically turn pygame on and allow usage
 
@@ -109,9 +110,17 @@ crystal_empty = pygame.image.load("crystal_empty.png").convert_alpha()
 crystal_full = pygame.transform.scale(crystal_full, (HUD_SIZE, HUD_SIZE))
 crystal_empty = pygame.transform.scale(crystal_empty, (HUD_SIZE, HUD_SIZE))
 
+# Meteor images
+meteor1 = pygame.image.load("METEOR 1.png").convert_alpha()
+meteor2 = pygame.image.load("METEOR 2.png").convert_alpha()
+meteor_images=[meteor1,meteor2]
+
+meteors = []
+NUM_METEORS = 5
+
 #heart/crystal variables
-lives = 3
 crystals_collected = 0
+lives = 3
 
 #rocket variables
 rocket1_x = 1000
@@ -174,6 +183,16 @@ def draw_crystal_hud(screen):
         x = HUD_MARGIN + i * (HUD_SIZE + HUD_SPACING)
         img = crystal_full if i < crystals_collected else crystal_empty
         screen.blit(img, (x, y))
+
+
+#meteor functions
+def create_meteor():
+    size=random.randint(40,95)
+    img=pygame.transform.scale(random.choice(meteor_images),(size,size))
+    return {"image":img,"x":random.randint(0,WIDTH-size),"y":random.randint(-700,-50),"speed":random.randint(3,9),"size":size}
+
+for _ in range(NUM_METEORS):
+    meteors.append(create_meteor())
 
 
 #MAIN GAME LOOP
@@ -466,6 +485,9 @@ while running:
         player_x = max(LEFT_LIMIT, min(player_x, RIGHT_LIMIT))
         player_y = max(TOP_LIMIT, min(player_y, BOTTOM_LIMIT))
 
+        #something with collisions:
+        player_rect.topleft = (player_x, player_y)
+
         # Draw the player after updating movement
         screen.blit(current_image, (player_x, player_y))
 
@@ -508,6 +530,20 @@ while running:
 
         timer_rect = timer_text.get_rect(center=(WIDTH // 2, 30))
         screen.blit(timer_text, timer_rect)
+
+        #drawing meteors and like their animation
+        for m in meteors:
+            m["y"] += m["speed"]
+            screen.blit(m["image"], (m["x"], m["y"]))
+            
+            # Check collision with falling meteor
+            meteor_rect = pygame.Rect(m["x"], m["y"], m["size"], m["size"])
+            if meteor_rect.colliderect(player_rect):
+                if lives > 0:
+                    lives -= 1
+                m.update(create_meteor())  # Respawn the meteor at the top
+            elif m["y"] > HEIGHT:
+                m.update(create_meteor())
 
         # Draw the hearts and crystals
         draw_hearts(screen)
