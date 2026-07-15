@@ -13,6 +13,11 @@ GAME_BLUE = (2,100,147)
 BLUE = (95,183,207)
 RED = (95,183,207)
 
+#Health/Stamina (HUD) bar sizing (shared by hearts + crystals so they match)
+HUD_SIZE = 50
+HUD_SPACING = 10
+HUD_MARGIN = 15
+
 #player limits for og screen
 OGLEFT_LIMIT = 50
 OGRIGHT_LIMIT = 1190
@@ -89,6 +94,20 @@ idle = pygame.transform.scale(player, (160, 160))
 walk_right = pygame.transform.scale(walk_right, (160, 160))
 walk_left = pygame.transform.scale(walk_left, (160, 160))
 
+# Heart image
+heart = pygame.image.load("heart.png")
+heart = pygame.transform.scale(heart, (HUD_SIZE, HUD_SIZE))
+
+# Crystal images
+crystal_full = pygame.image.load("crystal.png").convert_alpha()
+crystal_empty = pygame.image.load("crystal_empty.png").convert_alpha()
+crystal_full = pygame.transform.scale(crystal_full, (HUD_SIZE, HUD_SIZE))
+crystal_empty = pygame.transform.scale(crystal_empty, (HUD_SIZE, HUD_SIZE))
+
+#heart/crystal variables
+lives = 3
+crystals_collected = 0
+
 #rocket variables
 rocket1_x = 1000
 rocket1_y = 250
@@ -134,6 +153,23 @@ hold_start = 0
 
 # Current image starts as idle
 current_image = idle
+
+#heart/crystal functions
+def draw_hearts(screen):
+    """Draws the player's remaining lives in the bottom-right corner."""
+    y = HEIGHT - HUD_SIZE - HUD_MARGIN
+    for i in range(lives):
+        x = WIDTH - HUD_MARGIN - (lives - i) * HUD_SIZE - (lives - 1 - i) * HUD_SPACING
+        screen.blit(heart, (x, y))
+
+def draw_crystal_hud(screen):
+    """Draws 3 crystal slots in the bottom-left corner, parallel to hearts."""
+    y = HEIGHT - HUD_SIZE - HUD_MARGIN
+    for i in range(3):
+        x = HUD_MARGIN + i * (HUD_SIZE + HUD_SPACING)
+        img = crystal_full if i < crystals_collected else crystal_empty
+        screen.blit(img, (x, y))
+
 
 #MAIN GAME LOOP
 running = True #while the game is running is true...
@@ -451,6 +487,10 @@ while running:
                 screen.blit(mrock1, position)
             else:
                 screen.blit(mrock2, position)
+        
+        #drawing the hearts and crystal
+        draw_hearts(screen)
+        draw_crystal_hud(screen)
     
     pygame.display.flip()
     clock.tick(60)
