@@ -28,7 +28,7 @@ OGBOTTOM_LIMIT = 560
 LEFT_LIMIT = 0
 RIGHT_LIMIT = 1100
 TOP_LIMIT = 0
-BOTTOM_LIMIT = 560
+BOTTOM_LIMIT = 505
 
 # Load and resize the background image
 background = pygame.image.load("2247_earth.png")
