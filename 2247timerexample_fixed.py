@@ -116,7 +116,7 @@ meteor2 = pygame.image.load("METEOR 2.png").convert_alpha()
 meteor_images=[meteor1,meteor2]
 
 meteors = []
-NUM_METEORS = 5
+NUM_METEORS = 4
 
 #heart/crystal variables
 crystals_collected = 0
@@ -187,9 +187,9 @@ def draw_crystal_hud(screen):
 
 #meteor functions
 def create_meteor():
-    size=random.randint(40,95)
+    size=random.randint(40,70)
     img=pygame.transform.scale(random.choice(meteor_images),(size,size))
-    return {"image":img,"x":random.randint(0,WIDTH-size),"y":random.randint(-700,-50),"speed":random.randint(3,9),"size":size}
+    return {"image":img,"x":random.randint(0,WIDTH-size),"y":random.randint(-700,-50),"speed":random.randint(3,6),"size":size}
 
 for _ in range(NUM_METEORS):
     meteors.append(create_meteor())
