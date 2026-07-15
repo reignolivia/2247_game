@@ -13,10 +13,16 @@ GAME_BLUE = (2,100,147)
 BLUE = (95,183,207)
 RED = (95,183,207)
 
-#player limits
-LEFT_LIMIT = 50
-RIGHT_LIMIT = 1150
-TOP_LIMIT = 485
+#player limits for og screen
+OGLEFT_LIMIT = 50
+OGRIGHT_LIMIT = 1190
+OGTOP_LIMIT = 485
+OGBOTTOM_LIMIT = 560
+
+#player limits for all other levels
+LEFT_LIMIT = 0
+RIGHT_LIMIT = 1100
+TOP_LIMIT = 0
 BOTTOM_LIMIT = 560
 
 # Load and resize the background image
@@ -34,11 +40,33 @@ intro2 = pygame.image.load("Intro2.png")
 intro1 = pygame.transform.scale(intro1, (WIDTH, HEIGHT))
 intro2 = pygame.transform.scale(intro2, (WIDTH, HEIGHT))
 
+level1_intro = pygame.image.load("level1_intro.png")
+level1_intro = pygame.transform.scale(level1_intro, (WIDTH, HEIGHT))
+
+
 # Story screen variables
 story_images = [intro1, intro2]
 current_story = 0
 story_alpha = 0
 story_fade_speed = 4
+
+# Earth to Moon transition variables
+transition_alpha = 0
+transition_speed = 4
+
+# Transition timer
+transition_timer = 0
+
+#moon backgrounds
+level1_into = pygame.image.load("level1_intro.png")
+moon_background = pygame.image.load("moon.png")
+moon_background = pygame.transform.scale(moon_background, (WIDTH, HEIGHT))
+
+#moon rocks
+moon_rock1 = pygame.image.load("moon_rock1.png")
+moon_rock2 = pygame.image.load("moon_rock2.png")
+moon_rock1 = pygame.transform.scale(moon_rock1, (50, 50))
+moon_rock2 = pygame.transform.scale(moon_rock2, (50, 50))
 
 #rockets
 rocket1 = pygame.image.load("rocket1.png")
@@ -144,10 +172,11 @@ while running:
 
                 #Enter the rocket
                 if event.key == pygame.K_e and near_rocket:
-                    game_state = "rocket_scene"
+                    game_state = "transition"
+                    transition_alpha = 0
 
-    # Draw Everything
-    screen.blit(background, (0, 0))
+    #black ominous ahh screen
+    screen.fill((0, 0, 0))
 
     # =========================
     # INTRO
@@ -250,18 +279,21 @@ while running:
             player_y += speed
 
         # Keep player on screen
-        player_x = max(LEFT_LIMIT, min(player_x, RIGHT_LIMIT))
-        player_y = max(TOP_LIMIT, min(player_y, BOTTOM_LIMIT))
+        player_x = max(OGLEFT_LIMIT, min(player_x, OGRIGHT_LIMIT))
+        player_y = max(OGTOP_LIMIT, min(player_y, OGBOTTOM_LIMIT))
 
         # Update player and rocket rectangles
         player_rect.topleft = (player_x, player_y)
         rocket_rect.topleft = (rocket1_x, rocket1_y)
 
         # Create a larger interaction area around the rocket
-        interaction_rect = rocket_rect.inflate(120, 120)
+        interaction_rect = rocket_rect.inflate(100, 120)
 
         # Check if player is near the rocket
         near_rocket = player_rect.colliderect(interaction_rect)
+
+        # Draw Earth background
+        screen.blit(background, (0, 0))
 
         # Draw rocket
         screen.blit(rocket1, (rocket1_x, rocket1_y))
@@ -293,12 +325,106 @@ while running:
 
             screen.blit(prompt, (430, 635))
 
-    #4. Transition from Earth to Moon
+    #4. Earth to Moon Fade Transition
+    elif game_state == "transition":
+
+        # Draw the current Earth scene
+        screen.blit(background, (0, 0))
+        screen.blit(rocket1, (rocket1_x, rocket1_y))
+        screen.blit(current_image, (player_x, player_y))
+
+        # Draw the new background over the old one
+        earth_to_moon.set_alpha(transition_alpha)
+        screen.blit(earth_to_moon, (0, 0))
+
+        # Increase transparency
+        transition_alpha += transition_speed
+
+        # Once fully visible, move to the next scene
+        if transition_alpha >= 255:
+            transition_alpha = 255
+            game_state = "rocket_scene"
+            transition_timer = pygame.time.get_ticks()
+
+
+    #5. Earth to Moon Scene
     elif game_state == "rocket_scene":
 
-        # Draw the Earth to Moon background
         screen.blit(earth_to_moon, (0, 0))
+
+        # Hold this image for 2 seconds
+        if pygame.time.get_ticks() - transition_timer > 2000:
+            transition_alpha = 0
+            game_state = "level1_intro"
+
+
+    #6. LEVEL 1 INTRO
+    elif game_state == "level1_intro":
+
+        # Draw previous screen
+        screen.blit(earth_to_moon, (0,0))
+
+        # Fade in Level 1 image
+        level1_intro.set_alpha(transition_alpha)
+        screen.blit(level1_intro, (0,0))
+
+        transition_alpha += transition_speed
+
+        if transition_alpha >= 255:
+            transition_alpha = 255
+            transition_timer = pygame.time.get_ticks()
+            game_state = "moon_transition"
+
+    #7. Hold LEVEL 1 screen
+    elif game_state == "moon_transition":
+
+        screen.blit(level1_intro, (0,0))
+
+        # Hold for 3 seconds
+        if pygame.time.get_ticks() - transition_timer > 3000:
+            transition_alpha = 0
+            game_state = "moon_game"
     
+    #8. Moon Gameplay Intro
+    elif game_state == "moon_game":
+
+        # Draw previous screen first
+        screen.blit(level1_intro, (0,0))
+
+        # Fade Moon over it
+        moon_background.set_alpha(transition_alpha)
+        screen.blit(moon_background, (0,0))
+
+        transition_alpha += transition_speed
+
+        if transition_alpha >= 255:
+            transition_alpha = 255
+
+        screen.blit(current_image, (player_x, player_y))
+        keys = pygame.key.get_pressed()
+
+        # Character starts as idle each frame
+        current_image = idle
+
+        # Movement
+        if keys[pygame.K_d]:
+            player_x += speed
+            current_image = walk_right
+
+        elif keys[pygame.K_a]:
+            player_x -= speed
+            current_image = walk_left
+
+        if keys[pygame.K_w]:
+            player_y -= speed
+
+        if keys[pygame.K_s]:
+            player_y += speed
+
+        player_x = max(LEFT_LIMIT, min(player_x, RIGHT_LIMIT))
+        player_y = max(TOP_LIMIT, min(player_y, BOTTOM_LIMIT))
+
+
     pygame.display.flip()
     clock.tick(60)
 
